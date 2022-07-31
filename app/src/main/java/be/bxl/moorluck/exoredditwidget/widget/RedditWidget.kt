@@ -6,11 +6,9 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.Toast
-import be.bxl.moorluck.exoredditwidget.MainActivity
 import be.bxl.moorluck.exoredditwidget.R
 import be.bxl.moorluck.exoredditwidget.api.MemeApi
 import be.bxl.moorluck.exoredditwidget.api.client.RetrofitClient
@@ -37,17 +35,14 @@ class RedditWidget : AppWidgetProvider() {
     ) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+            updateAppWidget(context, appWidgetManager, appWidgetId, appWidgetIds)
         }
     }
 
     override fun onReceive(context: Context, intent: Intent?) {
         Log.d("helloe", "hello")
         if (intent?.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) {
-            val appWidgetIds = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                ComponentName(context.packageName, this::class.java.name)
-            )
-            onUpdate(context, AppWidgetManager.getInstance(context), appWidgetIds)
+            onUpdate(context, AppWidgetManager.getInstance(context), intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS) ?: IntArray(0))
         }
         else {
             super.onReceive(context, intent)
@@ -66,12 +61,13 @@ class RedditWidget : AppWidgetProvider() {
 internal fun updateAppWidget(
     context: Context,
     appWidgetManager: AppWidgetManager,
-    appWidgetId: Int
+    appWidgetId: Int,
+    appWidgetIds: IntArray
 ) {
     // Construct the RemoteViews object
     val views = RemoteViews(context.packageName, R.layout.reddit_widget)
 
-    views.setOnClickPendingIntent(R.id.btn_widget_update, getPendingIntentUpdate(context))
+    views.setOnClickPendingIntent(R.id.btn_widget_update, getPendingIntentUpdate(context, appWidgetIds))
     views.setOnClickPendingIntent(R.id.btn_widget_setting, getPendingIntentSetting(context))
 
     val sharedPref = context.getSharedPreferences(context.getString(R.string.pref_name), Context.MODE_PRIVATE)
@@ -114,8 +110,9 @@ internal fun getPendingIntentSetting(context: Context): PendingIntent? {
     return PendingIntent.getActivity(context, 0, intent, 0)
 }
 
-internal fun getPendingIntentUpdate(context: Context): PendingIntent? {
+internal fun getPendingIntentUpdate(context: Context, appWidgetIds: IntArray): PendingIntent? {
     val intent = Intent(context, RedditWidget::class.java)
     intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+    intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
     return PendingIntent.getBroadcast(context, 0, intent, 0)
 }
