@@ -6,6 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface MemeApi {
+    
     @GET("gimme/{subreddit}")
     fun randomMeme(@Path("subreddit") subreddit : String): Call<Meme>
 }
